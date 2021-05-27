@@ -56,7 +56,7 @@ For the example of Exif navigation a selection of :
 
 ### Ensure you have access to the binary source
 
-To do this attempt to do a 'save as...' through the workstation GUI. If there are errors here it would be su
+To do this attempt to do a 'save as...' through the workstation GUI. If there are errors here it would be a good idea to make your source available.
 
 ### Scripts -> Run Case Mount
 
