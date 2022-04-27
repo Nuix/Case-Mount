@@ -2,7 +2,7 @@
 # Needs Case: true
 # Needs Selected Items: false
 # Author: Cameron Stiller
-# Version: 1.0
+# Version: 1.1
 runTests=false
 $defaultQuery="not exclusion:*"
 $supportNext=false
@@ -549,9 +549,85 @@ trap("INT") {
 }
 
 class MyServlet < WEBrick::HTTPServlet::AbstractServlet
-	def do_PROPFIND(request,response)
+
+	def do_OPTIONS(request,response)
+		puts "OPTIONS REQUEST:#{request.path}"
+		response.status=200
+		response.header['Allow']="GET, OPTIONS, HEAD, PROPFIND, DELETE"
+		response.header['Access-Control-Allow-Methods']="GET, OPTIONS, HEAD, PROPFIND, DELETE"
+		response.header['Access-Control-Max-Age']=5 # 5 seconds
+	end
+	
+	#status 423 = there is a lock on the file. Kind of like saying it's open.
+	
+	def do_POST(request,response)
+		puts "POST REQUEST:#{request.path}"
+		response.status=423
+	end
+	
+	def do_MOVE(request,response)
+		puts "MOVE REQUEST:#{request.path}"
+		response.status=423
+	end
+	
+	def do_GETLIB(request,response)
+		puts "GETLIB REQUEST:#{request.path}"
+		response.status=423
+	end
+	
+	def do_LOCK(request,response)
+		puts "LOCK REQUEST:#{request.path}"
+		response.status=423
+	end
+	
+	def do_UNLOCK(request,response)
+		puts "UNLOCK REQUEST:#{request.path}"
+		response.status=423
+	end
+	
+	def do_MKCOL(request,response)
+		puts "MKCOL REQUEST:#{request.path}"
+		response.status=423
+	end
+	
+	def do_TRACE(request,response) # server error, not implemented
+		puts "TRACE REQUEST:#{request.path}"
+		response.status=501
+		response.content_type="text/plain"
+		response.body=ex.backtrace()
+	end
+		
+	def do_PROPPATCH(request,response)
+		puts "PROPPATCH REQUEST:#{request.path}"
+		response.status=501
+		response.content_type="text/plain"
+		response.body=ex.backtrace()
+	end
+	
+	def do_HEAD(request,response)
+		puts "HEAD REQUEST:#{request.path}"
 		begin
-			#puts request.path
+			nuixItem=NuixItem.new(request.path)
+			response.status = 200
+			response.content_type = nuixItem.getType()
+		rescue DavError => ex
+			puts "DavError.new (GET): " + ex.message
+			response.status=ex.status
+			response.content_type="text/plain"
+			response.body=ex.message
+		rescue Exception => ex
+			puts "error"
+			puts ex.message
+			puts ex.backtrace()
+			response.status=500
+			response.content_type="text/plain"
+			response.body=ex.backtrace()
+		end
+	end
+
+	def do_PROPFIND(request,response)
+		puts "PROPFIND REQUEST:#{request.path}"
+		begin
 			nuixItem=NuixItem.new(request.path)
 			response.status=200
 			response.content_type="text/xml;charset=utf-8"
@@ -570,7 +646,9 @@ class MyServlet < WEBrick::HTTPServlet::AbstractServlet
 			response.body=ex.backtrace()
 		end
 	end
+	
 	def do_PUT(request,response)
+		puts "PUT REQUEST:#{request.path}"
 		if(request.path=="/shutdown")
 			response.status=201
 			disconnectDrive()
@@ -602,9 +680,8 @@ class MyServlet < WEBrick::HTTPServlet::AbstractServlet
 	end
 	
 	def do_GET (request, response)
+		puts "GET REQUEST:#{request.path}"
 		begin
-			puts(request.path)
-			puts request.path
 			nuixItem=NuixItem.new(request.path)
 			response.status = 200
 			response.content_type = nuixItem.getType()
